@@ -1,0 +1,82 @@
+
+name: Build Android AAB
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+    paths:
+      - '**.html'
+      - '.github/workflows/build-aab.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Prepare web assets (index.html)
+        run: |
+          mkdir -p www
+          if [ -f "index.html" ]; then
+            cp "index.html" www/index.html
+          elif [ -f "Mundo Mágico.html" ]; then
+            cp "Mundo Mágico.html" www/index.html
+          else
+            echo "No HTML file found" && exit 1
+          fi
+
+      - name: Initialize Capacitor Android project
+        run: |
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "Mundo Magico" "com.mundomagico.app" --web-dir=www
+          npx cap add android
+
+      - name: Add microphone permission to AndroidManifest
+        run: |
+          MANIFEST="android/app/src/main/AndroidManifest.xml"
+          python3 -c '
+          p = "'$MANIFEST'"
+          with open(p, "r", encoding="utf-8") as f:
+              txt = f.read()
+          perm = "<uses-permission android:name=\"android.permission.RECORD_AUDIO\" />"
+          if perm not in txt:
+              txt = txt.replace("<manifest ", "<manifest ", 1)
+              idx = txt.find(">") + 1
+              txt = txt[:idx] + "\n    " + perm + txt[idx:]
+          with open(p, "w", encoding="utf-8") as f:
+              f.write(txt)
+          '
+
+      - name: Build signed release AAB
+        run: |
+          cd android
+          keytool -genkeypair -v -keystore release.keystore -alias mundomagico -keyalg RSA -keysize 2048 -validity 10000 -storepass MundoMagico2026 -keypass MundoMagico2026 -dname "CN=Mundo Magico, OU=App, O=Mundo Magico, L=City, S=State, C=ES"
+          ./gradlew bundleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/release.keystore \
+            -Pandroid.injected.signing.store.password=MundoMagico2026 \
+            -Pandroid.injected.signing.key.alias=mundomagico \
+            -Pandroid.injected.signing.key.password=MundoMagico2026
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: mundo-magico-aab
+          path: android/app/build/outputs/bundle/release/app-release.aab
