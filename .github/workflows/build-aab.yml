@@ -52,9 +52,9 @@ jobs:
         run: |
           npm init -y
           npm install @capacitor/core @capacitor/cli @capacitor/android
-          npx cap init "Mundo Magico" "com.mundomagicom.myapp" --web-dir=www
+          npx cap init "Mundo Magico" "com.mundomagicodebruno.myapp" --web-dir=www
           npx cap add android
-          npx cap sync androi
+          npx cap sync android
 
       - name: Add microphone permission to AndroidManifest
         run: |
