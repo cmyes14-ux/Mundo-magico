@@ -19,13 +19,13 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Configure Android SDK environment
         run: |
@@ -34,7 +34,6 @@ jobs:
           echo "ANDROID_SDK_ROOT=$SDK_DIR" >> $GITHUB_ENV
           echo "$SDK_DIR/platform-tools" >> $GITHUB_PATH
           echo "$SDK_DIR/cmdline-tools/latest/bin" >> $GITHUB_PATH
-          ls -la "$SDK_DIR" || true
 
       - name: Prepare web assets (index.html)
         run: |
@@ -55,28 +54,31 @@ jobs:
           npm install @capacitor/core @capacitor/cli @capacitor/android
           npx cap init "Mundo Magico" "com.mundomagico.app" --web-dir=www
           npx cap add android
+          npx cap sync android
 
       - name: Add microphone permission to AndroidManifest
         run: |
           MANIFEST="android/app/src/main/AndroidManifest.xml"
           python3 -c '
+          import xml.etree.ElementTree as ET
           p = "'$MANIFEST'"
-          with open(p, "r", encoding="utf-8") as f:
-              txt = f.read()
-          perm = "<uses-permission android:name=\"android.permission.RECORD_AUDIO\" />"
-          if perm not in txt:
-              txt = txt.replace("<manifest ", "<manifest ", 1)
-              idx = txt.find(">") + 1
-              txt = txt[:idx] + "\n    " + perm + txt[idx:]
-          with open(p, "w", encoding="utf-8") as f:
-              f.write(txt)
+          ET.register_namespace("android", "http://schemas.android.com/apk/res/android")
+          tree = ET.parse(p)
+          root = tree.getroot()
+          perm_name = "{http://schemas.android.com/apk/res/android}name"
+          perm_val = "android.permission.RECORD_AUDIO"
+          exists = any(el.tag.endswith("uses-permission") and el.attrib.get(perm_name) == perm_val for el in root)
+          if not exists:
+              elem = ET.Element("uses-permission", {perm_name: perm_val})
+              root.insert(0, elem)
+          tree.write(p, encoding="utf-8", xml_declaration=True)
           '
 
       - name: Build signed release AAB
         run: |
           cd android
           keytool -genkeypair -v -keystore release.keystore -alias mundomagico -keyalg RSA -keysize 2048 -validity 10000 -storepass MundoMagico2026 -keypass MundoMagico2026 -dname "CN=Mundo Magico, OU=App, O=Mundo Magico, L=City, S=State, C=ES"
-          ./gradlew bundleRelease \
+          ./gradlew bundleRelease --stacktrace \
             -Pandroid.injected.signing.store.file=$(pwd)/release.keystore \
             -Pandroid.injected.signing.store.password=MundoMagico2026 \
             -Pandroid.injected.signing.key.alias=mundomagico \
