@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Mundo Mágico - Modo Niño & Modo Padres</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Google Fonts: Fredoka & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            fredoka: ['Fredoka', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            magicPurple: '#6D28D9',
+            magicPink: '#EC4899',
+            magicYellow: '#F59E0B',
+            magicBlue: '#3B82F6',
+            magicGreen: '#10B981',
+          },
+          animation: {
+            'bounce-gentle': 'bounceGentle 2s infinite',
+            'float': 'float 3s ease-in-out infinite',
+            'pulse-glow': 'pulseGlow 1.5s infinite',
+            'spin-slow': 'spin 12s linear infinite',
+          },
+          keyframes: {
+            bounceGentle: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-8px)' },
+            },
+            float: {
+              '0%, 100%': { transform: 'translateY(0px) rotate(0deg)' },
+              '50%': { transform: 'translateY(-10px) rotate(2deg)' },
+            },
+            pulseGlow: {
+              '0%, 100%': { opacity: '1', boxShadow: '0 0 15px rgba(236, 72, 153, 0.6)' },
+              '50%': { opacity: '0.8', boxShadow: '0 0 25px rgba(245, 158, 11, 0.9)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    h1, h2, h3, .font-fun {
+      font-family: 'Fredoka', cursive, sans-serif;
+    }
+    
+    /* Animated Backdrops */
+    .bg-forest {
+      background: linear-gradient(180deg, #1e3a8a 0%, #065f46 50%, #047857 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .bg-castle {
+      background: linear-gradient(180deg, #0f172a 0%, #312e81 60%, #4c1d95 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .bg-island {
+      background: linear-gradient(180deg, #38bdf8 0%, #0284c7 40%, #fef08a 85%, #fde047 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .bg-space {
+      background: linear-gradient(180deg, #030712 0%, #1e1b4b 50%, #311042 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.05);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(109, 40, 217, 0.4);
+      border-radius: 10px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(109, 40, 217, 0.7);
+    }
+
+    /* Selection outline for interactive stage items */
+    .character-node.selected {
+      outline: 3px dashed #F59E0B;
+      outline-offset: 4px;
+      border-radius: 12px;
+    }
+
+    /* Stars particles */
+    .star-particle {
+      position: absolute;
+      background: white;
+      border-radius: 50%;
+      animation: float 4s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col overflow-x-hidden">
+
+  <!-- TOP APP BAR -->
+  <header class="bg-slate-800/90 backdrop-blur-md border-b border-slate-700 sticky top-0 z-40 px-3 py-2 sm:px-6">
+    <div class="max-w-7xl mx-auto flex items-center justify-between gap-2">
+      
+      <!-- Brand Logo -->
+      <div class="flex items-center gap-2 cursor-pointer" onclick="switchMode('child')">
+        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-pink-500 via-purple-500 to-amber-400 flex items-center justify-center text-white text-xl shadow-lg shadow-purple-500/30">
+          <i class="fa-solid fa-wand-magic-sparkles animate-pulse"></i>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-bold tracking-wide bg-gradient-to-r from-amber-300 via-pink-400 to-purple-300 bg-clip-text text-transparent">
+            Mundo Mágico
+          </h1>
+          <p class="text-[10px] sm:text-xs text-purple-300 font-semibold tracking-wider uppercase" id="currentModeLabel">
+            ✨ Modo Niño
+          </p>
+        </div>
+      </div>
+
+      <!-- Mode Selector Controls -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Play Movie Button -->
+        <button onclick="startMoviePlayer()" class="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white font-fun font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm shadow-md flex items-center gap-1.5 transition transform active:scale-95">
+          <i class="fa-solid fa-play text-amber-300"></i>
+          <span>Ver Película</span>
+        </button>
+
+        <!-- Mode Toggle Switch (Parents / Child) -->
+        <button id="modeToggleBtn" onclick="toggleParentalGate()" class="bg-purple-900/60 hover:bg-purple-800 border border-purple-500/50 text-purple-200 font-semibold px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs sm:text-sm flex items-center gap-2 transition active:scale-95">
+          <i class="fa-solid fa-user-shield text-amber-400" id="modeIcon"></i>
+          <span id="modeToggleText">Modo Padres</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN WRAPPER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-2 sm:p-4 flex flex-col gap-4">
+
+    <!-- ========================================== -->
+    <!-- MODO NIÑO (CHILD CREATIVE STAGE)          -->
+    <!-- ========================================== -->
+    <div id="childView" class="flex flex-col gap-3">
+      
+      <!-- Story Header & Scene Selector -->
+      <div class="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-3 sm:p-4 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="bg-amber-400/20 text-amber-300 text-xs font-bold px-2.5 py-0.5 rounded-full border border-amber-400/30">Cuento Activo</span>
+            <span id="storyAgeTag" class="text-xs text-slate-400">Edad: 3-6 años</span>
+          </div>
+          <h2 id="childStoryTitle" class="text-lg sm:text-2xl font-bold text-amber-300 mt-0.5">
+            ¡El Viaje del Zorro Mateo!
+          </h2>
+        </div>
+
+        <!-- 4 Scenes Navigation Tabs -->
+        <div class="flex items-center gap-1.5 bg-slate-900/70 p-1.5 rounded-xl border border-slate-700 overflow-x-auto">
+          <button onclick="selectScene(0)" id="sceneTab0" class="scene-tab-btn flex-1 min-w-[75px] py-1.5 px-3 rounded-lg text-xs font-fun font-bold transition flex items-center justify-center gap-1 text-slate-300">
+            <span>E1</span> <i class="fa-solid fa-tree text-[10px]"></i>
+          </button>
+          <button onclick="selectScene(1)" id="sceneTab1" class="scene-tab-btn flex-1 min-w-[75px] py-1.5 px-3 rounded-lg text-xs font-fun font-bold transition flex items-center justify-center gap-1 text-slate-300">
+            <span>E2</span> <i class="fa-solid fa-fort-awesome text-[10px]"></i>
+          </button>
+          <button onclick="selectScene(2)" id="sceneTab2" class="scene-tab-btn flex-1 min-w-[75px] py-1.5 px-3 rounded-lg text-xs font-fun font-bold transition flex items-center justify-center gap-1 text-slate-300">
+            <span>E3</span> <i class="fa-solid fa-umbrella-beach text-[10px]"></i>
+          </button>
+          <button onclick="selectScene(3)" id="sceneTab3" class="scene-tab-btn flex-1 min-w-[75px] py-1.5 px-3 rounded-lg text-xs font-fun font-bold transition flex items-center justify-center gap-1 text-slate-300">
+            <span>E4</span> <i class="fa-solid fa-rocket text-[10px]"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Owl Guidance Bubble (Parent Script Instructions for Child) -->
+      <div class="bg-gradient-to-r from-purple-900/70 to-indigo-900/70 border border-purple-500/40 rounded-2xl p-3 flex items-start gap-3 shadow-lg relative overflow-hidden">
+        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-amber-400 flex items-center justify-center text-slate-900 text-xl sm:text-2xl shrink-0 shadow-md">
+          🦉
+        </div>
+        <div class="flex-1 text-xs sm:text-sm">
+          <span class="font-bold text-amber-300 font-fun">Búho Sabio dice para esta escena:</span>
+          <p id="sceneGuideText" class="text-slate-200 mt-0.5">
+            "Presenta a Mateo el zorro en el bosque encantado y graba tu voz diciendo ¡Hola amigos!"
+          </p>
+        </div>
+      </div>
+
+      <!-- THE STAGE & TOOLBAR GRID -->
+      <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 items-start">
+        
+        <!-- Interactive Stage (3 Cols on Large) -->
+        <div class="lg:col-span-3 flex flex-col gap-2">
+          
+          <!-- STAGE CANVAS BOX -->
+          <div id="interactiveStage" class="w-full aspect-[16/9] max-h-[60vh] rounded-2xl border-4 border-slate-700/80 shadow-2xl relative select-none overflow-hidden bg-forest transition-all duration-500">
+            
+            <!-- Animated Background Layers -->
+            <div id="bgLayer" class="absolute inset-0 pointer-events-none"></div>
+
+            <!-- Interactive SVG Characters Dropzone -->
+            <div id="stageNodesContainer" class="absolute inset-0"></div>
+
+            <!-- Stage Control Overlay Buttons -->
+            <div class="absolute top-2 right-2 flex items-center gap-1.5 z-20">
+              <button onclick="changeCurrentSceneBackground()" class="bg-slate-900/80 hover:bg-slate-800 text-amber-300 border border-slate-600 rounded-xl px-2.5 py-1 text-xs font-bold flex items-center gap-1 backdrop-blur-sm">
+                <i class="fa-solid fa-image"></i>
+                <span class="hidden sm:inline">Fondo</span>
+              </button>
+              <button onclick="clearCurrentScene()" class="bg-rose-900/80 hover:bg-rose-800 text-rose-200 border border-rose-600 rounded-xl px-2.5 py-1 text-xs font-bold flex items-center gap-1 backdrop-blur-sm">
+                <i class="fa-solid fa-trash-can"></i>
+                <span class="hidden sm:inline">Limpiar</span>
+              </button>
+            </div>
+
+            <!-- Selected Node Tooltip Action Bar -->
+            <div id="nodeActionBar" class="absolute bottom-3 left-1/2 -translate-x-1/2 bg-slate-900/90 backdrop-blur-md border border-amber-400/50 rounded-full px-4 py-1.5 flex items-center gap-3 z-30 shadow-2xl hidden">
+              <button onclick="adjustSelectedNodeScale(1.1)" class="text-amber-300 hover:text-white text-sm" title="Aumentar"><i class="fa-solid fa-magnifying-glass-plus"></i></button>
+              <button onclick="adjustSelectedNodeScale(0.9)" class="text-amber-300 hover:text-white text-sm" title="Reducir"><i class="fa-solid fa-magnifying-glass-minus"></i></button>
+              <button onclick="flipSelectedNode()" class="text-amber-300 hover:text-white text-sm" title="Voltear"><i class="fa-solid fa-arrows-left-right"></i></button>
+              <button onclick="bringSelectedNodeForward()" class="text-amber-300 hover:text-white text-sm" title="Al Frente"><i class="fa-solid fa-layer-group"></i></button>
+              <button onclick="deleteSelectedNode()" class="text-rose-400 hover:text-rose-200 text-sm" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
+            </div>
+          </div>
+
+          <!-- Bottom Stage Audio Recorder Controls -->
+          <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3">
+            <!-- Voice Record Control -->
+            <div class="flex items-center gap-3">
+              <button id="micRecordBtn" onclick="toggleVoiceRecording()" class="w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center justify-center text-lg shadow-lg shadow-rose-600/30 transition transform active:scale-90">
+                <i class="fa-solid fa-microphone" id="micIcon"></i>
+              </button>
+              <div>
+                <h4 class="text-sm font-bold text-slate-200 font-fun">Grabadora de Voz del Niño</h4>
+                <p id="recordStatusText" class="text-xs text-slate-400">Presiona para grabar voz en esta escena</p>
+              </div>
+            </div>
+
+            <!-- Voice Preview / Delete Controls -->
+            <div id="voicePlaybackControls" class="flex items-center gap-2 hidden">
+              <button onclick="playSceneVoice()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 shadow">
+                <i class="fa-solid fa-play"></i> Escuchar Voz
+              </button>
+              <button onclick="deleteSceneVoice()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-2.5 py-1.5 rounded-xl text-xs font-bold">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Character & Props Drawer (1 Col) -->
+        <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-3.5 flex flex-col gap-3 max-h-[600px] overflow-hidden">
+          <h3 class="text-sm font-bold text-amber-300 font-fun flex items-center justify-between">
+            <span><i class="fa-solid fa-paw mr-1.5"></i> Personajes y Objetos</span>
+            <span class="text-[11px] text-slate-400 font-sans font-normal">Toca para añadir</span>
+          </h3>
+
+          <!-- Category Selector -->
+          <div class="flex gap-1 border-b border-slate-700 pb-2">
+            <button onclick="filterDrawer('characters')" id="drawerTabChars" class="flex-1 py-1 text-xs font-bold rounded-lg bg-purple-600 text-white">Personajes</button>
+            <button onclick="filterDrawer('props')" id="drawerTabProps" class="flex-1 py-1 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-700">Objetos</button>
+          </div>
+
+          <!-- Items Grid Drawer -->
+          <div id="drawerItemsGrid" class="grid grid-cols-3 gap-2 overflow-y-auto pr-1 flex-1 min-h-[260px]">
+            <!-- Items injected dynamically -->
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODO PADRES (PARENT IA & EDIT VIEW)        -->
+    <!-- ========================================== -->
+    <div id="parentView" class="flex flex-col gap-5 hidden">
+      
+      <div class="bg-purple-950/40 border border-purple-500/40 rounded-2xl p-4 sm:p-6 shadow-xl">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-purple-800/50 pb-4">
+          <div>
+            <h2 class="text-xl sm:text-2xl font-bold text-amber-300 font-fun flex items-center gap-2">
+              <i class="fa-solid fa-user-gear text-purple-400"></i> Panel del Creador (Modo Padres)
+            </h2>
+            <p class="text-xs sm:text-sm text-slate-300 mt-1">
+              Genera guiones educativos e historias personalizadas para tus hijos usando Inteligencia Artificial.
+            </p>
+          </div>
+          <button onclick="switchMode('child')" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-4 py-2 rounded-xl text-sm font-fun flex items-center gap-2 self-start sm:self-auto shadow-md">
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Probar en Modo Niño
+          </button>
+        </div>
+
+        <!-- AI Generator Options Form -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-5">
+          
+          <!-- API Key Input (Optional) -->
+          <div class="md:col-span-3 bg-slate-900/60 p-3 rounded-xl border border-slate-700">
+            <label class="text-xs font-bold text-slate-300 flex items-center justify-between mb-1">
+              <span><i class="fa-solid fa-key text-amber-400 mr-1"></i> Clave API de Gemini (Opcional)</span>
+              <span class="text-[10px] text-emerald-400 font-normal">Si se deja en blanco, usará el Motor Inteligente Local</span>
+            </label>
+            <input type="password" id="geminiApiKeyInput" placeholder="Pega tu API Key de Google Gemini aquí..." class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-purple-400">
+          </div>
+
+          <!-- Age Range -->
+          <div>
+            <label class="text-xs font-bold text-slate-300 mb-1 block">Rango de Edad</label>
+            <select id="aiAgeSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-400">
+              <option value="3-5 años">3 a 5 años (Historias cortas y sensoriales)</option>
+              <option value="6-8 años" selected>6 a 8 años (Aventuras y valores)</option>
+              <option value="9+ años">9+ años (Misterios y creatividad)</option>
+            </select>
+          </div>
+
+          <!-- Moral / Topic -->
+          <div>
+            <label class="text-xs font-bold text-slate-300 mb-1 block">Tema o Moraleja</label>
+            <select id="aiTopicSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-400">
+              <option value="Amistad y Compartir">Amistad y Compartir</option>
+              <option value="Valentía y Superar Miedos">Valentía y Superar Miedos</option>
+              <option value="Cuidado de la Naturaleza">Cuidado de la Naturaleza</option>
+              <option value="Curiosidad e Imaginación">Curiosidad e Imaginación</option>
+            </select>
+          </div>
+
+          <!-- Main Hero -->
+          <div>
+            <label class="text-xs font-bold text-slate-300 mb-1 block">Personaje Principal</label>
+            <select id="aiHeroSelect" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-purple-400">
+              <option value="Zorro Mateo">Mateo el Zorro</option>
+              <option value="Dragón Sparky">Sparky el Dragón Amigable</option>
+              <option value="Oso Pol">Oso Pol</option>
+              <option value="Hada Luna">Hada Luna</option>
+              <option value="Pirata Garfio">Pirata Garfio Feliz</option>
+            </select>
+          </div>
+
+        </div>
+
+        <!-- Generate Button -->
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <button onclick="generateStoryWithAI()" id="aiGenerateBtn" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-fun font-bold px-5 py-2.5 rounded-xl text-sm shadow-lg flex items-center gap-2 transition active:scale-95">
+            <i class="fa-solid fa-microchip"></i>
+            <span>✨ Generar Nueva Historia con IA</span>
+          </button>
+
+          <!-- Quick Template Preset Buttons -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400 hidden sm:inline">Plantillas rápidas:</span>
+            <button onclick="loadTemplateStory('zorro')" class="bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs px-2.5 py-1 rounded-lg border border-slate-700">El Zorro Valiente</button>
+            <button onclick="loadTemplateStory('dragon')" class="bg-slate-800 hover:bg-slate-700 text-pink-300 text-xs px-2.5 py-1 rounded-lg border border-slate-700">El Dragón Feliz</button>
+            <button onclick="loadTemplateStory('espacio')" class="bg-slate-800 hover:bg-slate-700 text-purple-300 text-xs px-2.5 py-1 rounded-lg border border-slate-700">Viaje Espacial</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- STORY SCRIPT REVIEW & EDITOR -->
+      <div class="bg-slate-800/80 border border-slate-700 rounded-2xl p-4 sm:p-6 shadow-md flex flex-col gap-4">
+        <h3 class="text-lg font-bold text-amber-300 font-fun flex items-center gap-2">
+          <i class="fa-solid fa-list-check"></i> Guion Actual de 4 Escenas
+        </h3>
+
+        <!-- Scene 1 to 4 Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="parentScenesContainer">
+          <!-- Dynamically populated scene cards -->
+        </div>
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- ========================================== -->
+  <!-- PARENTAL GATE MODAL                       -->
+  <!-- ========================================== -->
+  <div id="parentalGateModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-800 border-2 border-purple-500 rounded-3xl max-w-md w-full p-6 shadow-2xl flex flex-col gap-4 text-center">
+      <div class="w-14 h-14 bg-purple-900/60 text-purple-300 rounded-2xl flex items-center justify-center text-2xl mx-auto border border-purple-500/40">
+        <i class="fa-solid fa-shield-halved"></i>
+      </div>
+      <div>
+        <h3 class="text-xl font-bold font-fun text-amber-300">Control Parental</h3>
+        <p class="text-xs text-slate-300 mt-1">Resuelve la siguiente operación para ingresar al Modo Padres:</p>
+      </div>
+
+      <!-- Math Challenge -->
+      <div class="bg-slate-900 p-4 rounded-2xl border border-slate-700">
+        <span id="mathChallengeText" class="text-2xl font-bold font-fun text-purple-300">7 + 8 = ?</span>
+        <input type="number" id="parentGateInput" placeholder="Respuesta" class="w-full mt-3 bg-slate-950 border border-purple-500/50 rounded-xl py-2 px-3 text-center text-lg font-bold text-white focus:outline-none focus:border-amber-400">
+        <p id="gateErrorText" class="text-xs text-rose-400 mt-1 hidden">Respuesta incorrecta. Inténtalo de nuevo.</p>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <button onclick="closeParentalGate()" class="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-200 py-2.5 rounded-xl font-bold text-xs">Cancelar</button>
+        <button onclick="verifyParentalGate()" class="flex-1 bg-purple-600 hover:bg-purple-500 text-white py-2.5 rounded-xl font-bold text-xs shadow-lg">Verificar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- FULL MOVIE PLAYER MODAL                   -->
+  <!-- ========================================== -->
+  <div id="moviePlayerModal" class="fixed inset-0 bg-slate-950/95 backdrop-blur-lg z-50 flex flex-col items-center justify-center p-2 sm:p-6 hidden">
+    <div class="max-w-4xl w-full flex flex-col gap-3">
+      
+      <!-- Top Movie Header -->
+      <div class="flex items-center justify-between text-white px-2">
+        <div>
+          <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">Cine Mundo Mágico</span>
+          <h3 id="movieTitleText" class="text-lg sm:text-2xl font-bold font-fun">El Cuento Completo</h3>
+        </div>
+        <button onclick="closeMoviePlayer()" class="w-9 h-9 rounded-full bg-slate-800 text-slate-300 hover:bg-rose-600 hover:text-white flex items-center justify-center transition">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Movie Screen Box -->
+      <div class="w-full aspect-[16/9] max-h-[70vh] rounded-2xl border-4 border-slate-700 shadow-2xl relative overflow-hidden bg-slate-900" id="movieScreenBox">
+        <canvas id="movieCanvas" class="w-full h-full object-contain block"></canvas>
+        
+        <!-- Confetti Canvas Overlay -->
+        <canvas id="confettiCanvas" class="absolute inset-0 pointer-events-none z-30"></canvas>
+
+        <!-- Subtitles Overlay -->
+        <div id="movieSubtitle" class="absolute bottom-4 left-4 right-4 bg-slate-900/80 backdrop-blur-md border border-amber-400/40 text-amber-200 p-3 rounded-xl text-center text-xs sm:text-sm font-medium z-20 transition-all">
+          Cargando escena...
+        </div>
+      </div>
+
+      <!-- Movie Controls Bar -->
+      <div class="bg-slate-800 border border-slate-700 rounded-2xl p-3 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+          <button id="moviePlayPauseBtn" onclick="toggleMoviePlayback()" class="bg-amber-400 hover:bg-amber-300 text-slate-950 font-bold px-4 py-2 rounded-xl text-xs font-fun flex items-center gap-1.5">
+            <i class="fa-solid fa-pause" id="moviePlayIcon"></i> Pausar
+          </button>
+          <span id="movieSceneCounter" class="text-xs text-slate-300 font-bold">Escena 1 de 4</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <!-- Download Video Button -->
+          <button id="downloadMovieBtn" onclick="exportMovieAsWebM()" class="bg-purple-600 hover:bg-purple-500 text-white font-bold px-3 py-2 rounded-xl text-xs flex items-center gap-1.5 transition">
+            <i class="fa-solid fa-download"></i> Descargar Película (.webm)
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+
+  <!-- ========================================== -->
+  <!-- JAVASCRIPT APP ENGINE                      -->
+  <!-- ========================================== -->
+  <script>
+    /* ===================================================
+       1. GLOBAL STATE & SVG ASSET DEFINITIONS
+       =================================================== */
+    
+    // Shared Story State
+    let storyState = {
+      title: "El Viaje del Zorro Mateo",
+      ageRange: "6-8 años",
+      topic: "Amistad y Compartir",
+      currentSceneIndex: 0,
+      scenes: [
+        {
+          id: 0,
+          background: "forest",
+          guideText: "Presenta a Mateo el zorro en el bosque encantado y di ¡Hola amigos!",
+          nodes: [],
+          audioBlob: null,
+          audioUrl: null
+        },
+        {
+          id: 1,
+          background: "castle",
+          guideText: "Mateo llega al Castillo Estelar y encuentra una estrella mágica.",
+          nodes: [],
+          audioBlob: null,
+          audioUrl: null
+        },
+        {
+          id: 2,
+          background: "island",
+          guideText: "En la Isla del Tesoro, el dragón Sparky invita a Mateo a jugar.",
+          nodes: [],
+          audioBlob: null,
+          audioUrl: null
+        },
+        {
+          id: 3,
+          background: "space",
+          guideText: "¡Todos viajan juntos al espacio en un cohete fantástico!",
+          nodes: [],
+          audioBlob: null,
+          audioUrl: null
+        }
+      ]
+    };
+
+    let activeMode = 'child'; // 'child' | 'parent'
+    let selectedNodeId = null;
+    let gateAnswer = 0;
+    let mediaRecorder = null;
+    let audioChunks = [];
+    let isRecordingVoice = false;
+
+    // SVG Graphics Bank
+    const SVG_LIBRARY = {
+      zorro: {
+        id: 'zorro',
+        name: 'Zorro Mateo',
+        category: 'characters',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <path d="M 20 80 Q 50 100 80 80 L 85 50 Q 50 30 15 50 Z" fill="#ea580c"/>
+          <polygon points="20,40 10,10 40,30" fill="#ea580c"/>
+          <polygon points="80,40 90,10 60,30" fill="#ea580c"/>
+          <polygon points="22,35 15,15 35,28" fill="#fef08a"/>
+          <polygon points="78,35 85,15 65,28" fill="#fef08a"/>
+          <path d="M 30 55 Q 50 85 70 55 Q 50 75 30 55 Z" fill="#fff"/>
+          <circle cx="38" cy="48" r="5" fill="#1e293b"/>
+          <circle cx="62" cy="48" r="5" fill="#1e293b"/>
+          <circle cx="40" cy="46" r="1.5" fill="#fff"/>
+          <circle cx="64" cy="46" r="1.5" fill="#fff"/>
+          <circle cx="50" cy="62" r="6" fill="#0f172a"/>
+        </svg>`
+      },
+      dragon: {
+        id: 'dragon',
+        name: 'Dragón Sparky',
+        category: 'characters',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <path d="M 30 30 Q 10 10 25 5 Q 40 25 35 35" fill="#10b981"/>
+          <path d="M 70 30 Q 90 10 75 5 Q 60 25 65 35" fill="#10b981"/>
+          <circle cx="50" cy="55" r="35" fill="#10b981"/>
+          <ellipse cx="50" cy="65" rx="20" ry="18" fill="#a7f3d0"/>
+          <circle cx="38" cy="45" r="6" fill="#fff"/>
+          <circle cx="62" cy="45" r="6" fill="#fff"/>
+          <circle cx="38" cy="45" r="3" fill="#064e3b"/>
+          <circle cx="62" cy="45" r="3" fill="#064e3b"/>
+          <ellipse cx="43" cy="60" rx="2" ry="3" fill="#064e3b"/>
+          <ellipse cx="57" cy="60" rx="2" ry="3" fill="#064e3b"/>
+          <path d="M 40 70 Q 50 78 60 70" stroke="#064e3b" stroke-width="3" fill="none" stroke-linecap="round"/>
+        </svg>`
+      },
+      oso: {
+        id: 'oso',
+        name: 'Oso Pol',
+        category: 'characters',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <circle cx="25" cy="25" r="14" fill="#b45309"/>
+          <circle cx="75" cy="25" r="14" fill="#b45309"/>
+          <circle cx="25" cy="25" r="7" fill="#fde047"/>
+          <circle cx="75" cy="25" r="7" fill="#fde047"/>
+          <circle cx="50" cy="55" r="36" fill="#b45309"/>
+          <ellipse cx="50" cy="65" rx="18" ry="14" fill="#fde047"/>
+          <circle cx="38" cy="48" r="4" fill="#1e293b"/>
+          <circle cx="62" cy="48" r="4" fill="#1e293b"/>
+          <ellipse cx="50" cy="60" rx="6" ry="4" fill="#1e293b"/>
+        </svg>`
+      },
+      hada: {
+        id: 'hada',
+        name: 'Hada Luna',
+        category: 'characters',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <ellipse cx="28" cy="45" rx="20" ry="10" fill="#cbd5e1" opacity="0.8"/>
+          <ellipse cx="72" cy="45" rx="20" ry="10" fill="#cbd5e1" opacity="0.8"/>
+          <circle cx="50" cy="40" r="22" fill="#fde047"/>
+          <path d="M 40 60 L 60 60 L 68 90 L 32 90 Z" fill="#ec4899"/>
+          <circle cx="43" cy="38" r="3" fill="#1e293b"/>
+          <circle cx="57" cy="38" r="3" fill="#1e293b"/>
+          <path d="M 45 48 Q 50 52 55 48" stroke="#1e293b" stroke-width="2" fill="none"/>
+        </svg>`
+      },
+      pirata: {
+        id: 'pirata',
+        name: 'Pirata Feliz',
+        category: 'characters',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <circle cx="50" cy="50" r="30" fill="#fed7aa"/>
+          <path d="M 20 40 Q 50 15 80 40 L 80 32 Q 50 10 20 32 Z" fill="#dc2626"/>
+          <circle cx="38" cy="48" r="6" fill="#0f172a"/>
+          <circle cx="62" cy="48" r="3" fill="#0f172a"/>
+          <path d="M 40 68 Q 50 78 60 68" stroke="#0f172a" stroke-width="3" fill="none"/>
+        </svg>`
+      },
+      estrella: {
+        id: 'estrella',
+        name: 'Estrellita',
+        category: 'props',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <polygon points="50,5 64,36 98,36 70,57 81,91 50,70 19,91 30,57 2,36 36,36" fill="#f59e0b"/>
+          <circle cx="40" cy="45" r="3" fill="#0f172a"/>
+          <circle cx="60" cy="45" r="3" fill="#0f172a"/>
+          <path d="M 44 55 Q 50 60 56 55" stroke="#0f172a" stroke-width="2" fill="none"/>
+        </svg>`
+      },
+      cofre: {
+        id: 'cofre',
+        name: 'Cofre Tesoro',
+        category: 'props',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <rect x="15" y="45" width="70" height="45" rx="6" fill="#78350f"/>
+          <path d="M 15 45 Q 50 20 85 45 Z" fill="#92400e"/>
+          <rect x="43" y="55" width="14" height="18" rx="3" fill="#f59e0b"/>
+          <circle cx="50" cy="64" r="3" fill="#0f172a"/>
+        </svg>`
+      },
+      varita: {
+        id: 'varita',
+        name: 'Varita Mágica',
+        category: 'props',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <line x1="20" y1="80" x2="65" y2="35" stroke="#94a3b8" stroke-width="8" stroke-linecap="round"/>
+          <polygon points="75,10 82,25 98,25 85,35 90,50 75,40 60,50 65,35 52,25 68,25" fill="#f59e0b"/>
+        </svg>`
+      },
+      cohete: {
+        id: 'cohete',
+        name: 'Cohete Rastro',
+        category: 'props',
+        svg: `<svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-md">
+          <path d="M 50 10 Q 75 40 65 80 L 35 80 Q 25 40 50 10 Z" fill="#e11d48"/>
+          <circle cx="50" cy="45" r="10" fill="#38bdf8"/>
+          <path d="M 30 70 L 15 90 L 35 85 Z" fill="#f59e0b"/>
+          <path d="M 70 70 L 85 90 L 65 85 Z" fill="#f59e0b"/>
+        </svg>`
+      }
+    };
+
+
+    /* ===================================================
+       2. WEB AUDIO SYNTHESIZER (No External Sound Files)
+       =================================================== */
+    let audioCtx = null;
+    function getAudioContext() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function playSoundEffect(type) {
+      try {
+        const ctx = getAudioContext();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+
+        if (type === 'pop') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(400, now);
+          osc.frequency.exponentialRampToValueAtTime(800, now + 0.08);
+          gain.gain.setValueAtTime(0.4, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
+          osc.start(now);
+          osc.stop(now + 0.08);
+        } else if (type === 'boing') {
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(150, now);
+          osc.frequency.linearRampToValueAtTime(400, now + 0.25);
+          gain.gain.setValueAtTime(0.5, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+          osc.start(now);
+          osc.stop(now + 0.25);
+        } else if (type === 'chime') {
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(523.25, now); // C5
+          osc.frequency.setValueAtTime(659.25, now + 0.1); // E5
+          osc.frequency.setValueAtTime(783.99, now + 0.2); // G5
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+          osc.start(now);
+          osc.stop(now + 0.4);
+        } else if (type === 'fanfare') {
+          const notes = [523.25, 659.25, 783.99, 1046.50];
+          notes.forEach((freq, idx) => {
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.connect(g);
+            g.connect(ctx.destination);
+            o.frequency.setValueAtTime(freq, now + idx * 0.12);
+            g.gain.setValueAtTime(0.3, now + idx * 0.12);
+            g.gain.linearRampToValueAtTime(0.01, now + idx * 0.12 + 0.3);
+            o.start(now + idx * 0.12);
+            o.stop(now + idx * 0.12 + 0.3);
+          });
+        }
+      } catch (e) {
+        console.log("WebAudio error:", e);
+      }
+    }
+
+
+    /* ===================================================
+       3. APP INITIALIZATION & NAVIGATION
+       =================================================== */
+    window.onload = function() {
+      renderDrawerItems('characters');
+      renderCurrentScene();
+      updateParentView();
+    };
+
+    function switchMode(mode) {
+      activeMode = mode;
+      const childView = document.getElementById('childView');
+      const parentView = document.getElementById('parentView');
+      const modeToggleText = document.getElementById('modeToggleText');
+      const modeIcon = document.getElementById('modeIcon');
+      const currentModeLabel = document.getElementById('currentModeLabel');
+
+      if (mode === 'child') {
+        childView.classList.remove('hidden');
+        parentView.classList.add('hidden');
+        modeToggleText.textContent = "Modo Padres";
+        modeIcon.className = "fa-solid fa-user-shield text-amber-400";
+        currentModeLabel.textContent = "✨ Modo Niño";
+        renderCurrentScene();
+      } else {
+        childView.classList.add('hidden');
+        parentView.classList.remove('hidden');
+        modeToggleText.textContent = "Modo Niño";
+        modeIcon.className = "fa-solid fa-child-reaching text-pink-400";
+        currentModeLabel.textContent = "🛠️ Modo Padres (Creador)";
+        updateParentView();
+      }
+    }
+
+    /* Parental Gate Verification */
+    function toggleParentalGate() {
+      if (activeMode === 'parent') {
+        switchMode('child');
+        return;
+      }
+      // Generate math question
+      const num1 = Math.floor(Math.random() * 8) + 4;
+      const num2 = Math.floor(Math.random() * 8) + 3;
+      gateAnswer = num1 + num2;
+      document.getElementById('mathChallengeText').textContent = `${num1} + ${num2} = ?`;
+      document.getElementById('parentGateInput').value = '';
+      document.getElementById('gateErrorText').classList.add('hidden');
+      document.getElementById('parentalGateModal').classList.remove('hidden');
+    }
+
+    function closeParentalGate() {
+      document.getElementById('parentalGateModal').classList.add('hidden');
+    }
+
+    function verifyParentalGate() {
+      const userAns = parseInt(document.getElementById('parentGateInput').value, 10);
+      if (userAns === gateAnswer) {
+        closeParentalGate();
+        switchMode('parent');
+        playSoundEffect('chime');
+      } else {
+        document.getElementById('gateErrorText').classList.remove('hidden');
+      }
+    }
+
+
+    /* ===================================================
+       4. MODO NIÑO: STAGE & INTERACTIVE CANVAS
+       =================================================== */
+    function selectScene(index) {
+      storyState.currentSceneIndex = index;
+      selectedNodeId = null;
+      renderCurrentScene();
+      playSoundEffect('pop');
+    }
+
+    function renderCurrentScene() {
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      
+      // Update Scene Tabs Active UI
+      for (let i = 0; i < 4; i++) {
+        const tab = document.getElementById(`sceneTab${i}`);
+        if (i === storyState.currentSceneIndex) {
+          tab.className = "scene-tab-btn flex-1 min-w-[75px] py-1.5 px-3 rounded-lg text-xs font-fun font-bold transition flex items-center justify-center gap-1 bg-amber-400 text-slate-950 shadow-md scale-105";
+        } else {
+          tab.className = "scene-tab-btn flex-1 min-w-[75px] py-1.5 px-3 rounded-lg text-xs font-fun font-bold transition flex items-center justify-center gap-1 bg-slate-800 text-slate-300 hover:bg-slate-700";
+        }
+      }
+
+      // Story Header & Guide
+      document.getElementById('childStoryTitle').textContent = storyState.title;
+      document.getElementById('storyAgeTag').textContent = `Edad: ${storyState.ageRange}`;
+      document.getElementById('sceneGuideText').textContent = `"${scene.guideText}"`;
+
+      // Update Stage Background Class
+      const stage = document.getElementById('interactiveStage');
+      stage.className = `w-full aspect-[16/9] max-h-[60vh] rounded-2xl border-4 border-slate-700/80 shadow-2xl relative select-none overflow-hidden transition-all duration-500 bg-${scene.background}`;
+
+      // Render Stage Nodes
+      renderStageNodes();
+
+      // Voice Controls Status
+      const voiceControls = document.getElementById('voicePlaybackControls');
+      const statusText = document.getElementById('recordStatusText');
+      if (scene.audioUrl) {
+        voiceControls.classList.remove('hidden');
+        statusText.textContent = "¡Voz grabada lista!";
+      } else {
+        voiceControls.classList.add('hidden');
+        statusText.textContent = "Presiona para grabar voz en esta escena";
+      }
+
+      hideNodeActionBar();
+    }
+
+    function renderStageNodes() {
+      const container = document.getElementById('stageNodesContainer');
+      container.innerHTML = '';
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+
+      scene.nodes.forEach(node => {
+        const nodeEl = document.createElement('div');
+        nodeEl.id = `node-${node.id}`;
+        nodeEl.className = `character-node absolute cursor-grab active:cursor-grabbing ${selectedNodeId === node.id ? 'selected' : ''}`;
+        nodeEl.style.left = `${node.x}%`;
+        nodeEl.style.top = `${node.y}%`;
+        nodeEl.style.width = `${node.size}px`;
+        nodeEl.style.height = `${node.size}px`;
+        nodeEl.style.transform = `translate(-50%, -50%) scaleX(${node.flipped ? -1 : 1})`;
+        nodeEl.style.zIndex = node.zIndex || 10;
+
+        const asset = SVG_LIBRARY[node.assetId];
+        nodeEl.innerHTML = asset ? asset.svg : '';
+
+        // Node Click & Drag Handlers
+        nodeEl.onmousedown = (e) => startNodeDrag(e, node.id);
+        nodeEl.ontouchstart = (e) => startNodeDrag(e, node.id);
+
+        container.appendChild(nodeEl);
+      });
+    }
+
+    /* Node Drag Logic */
+    function startNodeDrag(e, nodeId) {
+      e.stopPropagation();
+      selectedNodeId = nodeId;
+      playSoundEffect('boing');
+      renderStageNodes();
+      showNodeActionBar();
+
+      const stage = document.getElementById('interactiveStage');
+      const rect = stage.getBoundingClientRect();
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      const node = scene.nodes.find(n => n.id === nodeId);
+
+      const moveHandler = (moveEvent) => {
+        const clientX = moveEvent.touches ? moveEvent.touches[0].clientX : moveEvent.clientX;
+        const clientY = moveEvent.touches ? moveEvent.touches[0].clientY : moveEvent.clientY;
+
+        let xPercent = ((clientX - rect.left) / rect.width) * 100;
+        let yPercent = ((clientY - rect.top) / rect.height) * 100;
+
+        // Boundaries
+        node.x = Math.max(5, Math.min(95, xPercent));
+        node.y = Math.max(5, Math.min(95, yPercent));
+
+        const nodeEl = document.getElementById(`node-${node.id}`);
+        if (nodeEl) {
+          nodeEl.style.left = `${node.x}%`;
+          nodeEl.style.top = `${node.y}%`;
+        }
+      };
+
+      const upHandler = () => {
+        window.removeEventListener('mousemove', moveHandler);
+        window.removeEventListener('mouseup', upHandler);
+        window.removeEventListener('touchmove', moveHandler);
+        window.removeEventListener('touchend', upHandler);
+      };
+
+      window.addEventListener('mousemove', moveHandler);
+      window.addEventListener('mouseup', upHandler);
+      window.addEventListener('touchmove', moveHandler, { passive: false });
+      window.addEventListener('touchend', upHandler);
+    }
+
+    /* Drawer Items & Add to Scene */
+    function filterDrawer(category) {
+      document.getElementById('drawerTabChars').className = category === 'characters' ? 'flex-1 py-1 text-xs font-bold rounded-lg bg-purple-600 text-white' : 'flex-1 py-1 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-700';
+      document.getElementById('drawerTabProps').className = category === 'props' ? 'flex-1 py-1 text-xs font-bold rounded-lg bg-purple-600 text-white' : 'flex-1 py-1 text-xs font-bold rounded-lg text-slate-400 hover:bg-slate-700';
+      renderDrawerItems(category);
+    }
+
+    function renderDrawerItems(category) {
+      const grid = document.getElementById('drawerItemsGrid');
+      grid.innerHTML = '';
+      Object.values(SVG_LIBRARY).filter(item => item.category === category).forEach(item => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-900/80 hover:bg-purple-900/40 border border-slate-700 rounded-xl p-2 flex flex-col items-center justify-center gap-1 cursor-pointer transition transform active:scale-95 text-center";
+        card.onclick = () => addAssetToStage(item.id);
+        card.innerHTML = `<div class="w-12 h-12">${item.svg}</div><span class="text-[10px] font-bold text-slate-300">${item.name}</span>`;
+        grid.appendChild(card);
+      });
+    }
+
+    function addAssetToStage(assetId) {
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      const newNode = {
+        id: 'node_' + Date.now(),
+        assetId: assetId,
+        x: 40 + (scene.nodes.length * 5) % 30,
+        y: 50,
+        size: 90,
+        flipped: false,
+        zIndex: scene.nodes.length + 10
+      };
+      scene.nodes.push(newNode);
+      selectedNodeId = newNode.id;
+      renderStageNodes();
+      showNodeActionBar();
+      playSoundEffect('pop');
+    }
+
+    /* Node Transformations */
+    function showNodeActionBar() {
+      document.getElementById('nodeActionBar').classList.remove('hidden');
+    }
+    function hideNodeActionBar() {
+      document.getElementById('nodeActionBar').classList.add('hidden');
+    }
+
+    function adjustSelectedNodeScale(factor) {
+      if (!selectedNodeId) return;
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      const node = scene.nodes.find(n => n.id === selectedNodeId);
+      if (node) {
+        node.size = Math.max(40, Math.min(220, node.size * factor));
+        renderStageNodes();
+      }
+    }
+
+    function flipSelectedNode() {
+      if (!selectedNodeId) return;
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      const node = scene.nodes.find(n => n.id === selectedNodeId);
+      if (node) {
+        node.flipped = !node.flipped;
+        renderStageNodes();
+      }
+    }
+
+    function bringSelectedNodeForward() {
+      if (!selectedNodeId) return;
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      const node = scene.nodes.find(n => n.id === selectedNodeId);
+      if (node) {
+        node.zIndex = (node.zIndex || 10) + 5;
+        renderStageNodes();
+      }
+    }
+
+    function deleteSelectedNode() {
+      if (!selectedNodeId) return;
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      scene.nodes = scene.nodes.filter(n => n.id !== selectedNodeId);
+      selectedNodeId = null;
+      renderStageNodes();
+      hideNodeActionBar();
+      playSoundEffect('pop');
+    }
+
+    function changeCurrentSceneBackground() {
+      const bgList = ['forest', 'castle', 'island', 'space'];
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      const currIdx = bgList.indexOf(scene.background);
+      scene.background = bgList[(currIdx + 1) % bgList.length];
+      renderCurrentScene();
+      playSoundEffect('chime');
+    }
+
+    function clearCurrentScene() {
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      scene.nodes = [];
+      selectedNodeId = null;
+      renderStageNodes();
+      hideNodeActionBar();
+    }
+
+
+    /* ===================================================
+       5. CHILD VOICE RECORDER ENGINE (MediaRecorder API)
+       =================================================== */
+    async function toggleVoiceRecording() {
+      const micBtn = document.getElementById('micRecordBtn');
+      const micIcon = document.getElementById('micIcon');
+      const statusText = document.getElementById('recordStatusText');
+
+      if (!isRecordingVoice) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => {
+            if (e.data.size > 0) audioChunks.push(e.data);
+          };
+
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const scene = storyState.scenes[storyState.currentSceneIndex];
+            scene.audioBlob = audioBlob;
+            scene.audioUrl = audioUrl;
+
+            renderCurrentScene();
+            playSoundEffect('chime');
+          };
+
+          mediaRecorder.start();
+          isRecordingVoice = true;
+          micBtn.className = "w-12 h-12 rounded-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold flex items-center justify-center text-lg shadow-lg animate-pulse";
+          micIcon.className = "fa-solid fa-square";
+          statusText.textContent = "🔴 Grabando voz... Presiona para detener";
+        } catch (err) {
+          console.error("Microphone access denied:", err);
+          statusText.textContent = "Error: Permiso de micrófono no otorgado.";
+        }
+      } else {
+        if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+          mediaRecorder.stop();
+          // stop mic track
+          mediaRecorder.stream.getTracks().forEach(t => t.stop());
+        }
+        isRecordingVoice = false;
+        micBtn.className = "w-12 h-12 rounded-full bg-rose-600 hover:bg-rose-500 text-white font-bold flex items-center justify-center text-lg shadow-lg shadow-rose-600/30 transition transform active:scale-90";
+        micIcon.className = "fa-solid fa-microphone";
+      }
+    }
+
+    function playSceneVoice() {
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      if (scene.audioUrl) {
+        const audio = new Audio(scene.audioUrl);
+        audio.play();
+      }
+    }
+
+    function deleteSceneVoice() {
+      const scene = storyState.scenes[storyState.currentSceneIndex];
+      scene.audioBlob = null;
+      scene.audioUrl = null;
+      renderCurrentScene();
+    }
+
+
+    /* ===================================================
+       6. MODO PADRES: AI STORY GENERATION & EDITING
+       =================================================== */
+    function updateParentView() {
+      const container = document.getElementById('parentScenesContainer');
+      container.innerHTML = '';
+
+      storyState.scenes.forEach((scene, idx) => {
+        const card = document.createElement('div');
+        card.className = "bg-slate-900 border border-purple-500/30 rounded-xl p-3.5 flex flex-col gap-2";
+        card.innerHTML = `
+          <div class="flex items-center justify-between border-b border-slate-700 pb-2">
+            <span class="text-xs font-bold text-amber-300 font-fun">Escena ${idx + 1}</span>
+            <select onchange="updateSceneBackground(${idx}, this.value)" class="bg-slate-950 border border-slate-700 rounded px-2 py-1 text-[11px] text-slate-300">
+              <option value="forest" ${scene.background === 'forest' ? 'selected' : ''}>Bosque Encantado</option>
+              <option value="castle" ${scene.background === 'castle' ? 'selected' : ''}>Castillo Estelar</option>
+              <option value="island" ${scene.background === 'island' ? 'selected' : ''}>Isla del Tesoro</option>
+              <option value="space" ${scene.background === 'space' ? 'selected' : ''}>Espacio Cósmico</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 font-bold block mb-1">Guion / Instrucción para el Niño:</label>
+            <textarea onchange="updateSceneGuideText(${idx}, this.value)" class="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-xs text-slate-200 focus:outline-none focus:border-purple-500 h-16">${scene.guideText}</textarea>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function updateSceneBackground(idx, bg) {
+      storyState.scenes[idx].background = bg;
+    }
+
+    function updateSceneGuideText(idx, text) {
+      storyState.scenes[idx].guideText = text;
+    }
+
+    /* AI Generator Logic (Gemini API or Local Generator) */
+    async function generateStoryWithAI() {
+      const apiKey = document.getElementById('geminiApiKeyInput').value.trim();
+      const age = document.getElementById('aiAgeSelect').value;
+      const topic = document.getElementById('aiTopicSelect').value;
+      const hero = document.getElementById('aiHeroSelect').value;
+      const btn = document.getElementById('aiGenerateBtn');
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin"></i> <span>Generando Cuento Mágico...</span>`;
+
+      if (apiKey) {
+        try {
+          const userPrompt = `Crea un cuento infantil de 4 escenas para niños de ${age} sobre el tema "${topic}" donde el personaje principal es "${hero}". 
+          Responde EXCLUSIVAMENTE en formato JSON con la siguiente estructura:
+          {
+            "title": "Título del cuento",
+            "scenes": [
+              {"guideText": "Descripción corta escena 1", "background": "forest"},
+              {"guideText": "Descripción corta escena 2", "background": "castle"},
+              {"guideText": "Descripción corta escena 3", "background": "island"},
+              {"guideText": "Descripción corta escena 4", "background": "space"}
+            ]
+          }`;
+
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: userPrompt }] }]
+            })
+          });
+
+          const data = await response.json();
+          const jsonText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+          const parsed = JSON.parse(jsonText.replace(/```json|```/g, ''));
+
+          if (parsed.title && parsed.scenes) {
+            storyState.title = parsed.title;
+            storyState.ageRange = age;
+            storyState.topic = topic;
+            parsed.scenes.forEach((sc, idx) => {
+              storyState.scenes[idx].guideText = sc.guideText;
+              if (sc.background) storyState.scenes[idx].background = sc.background;
+            });
+          }
+        } catch (e) {
+          console.warn("Gemini API call failed or fallback used:", e);
+          generateLocalStory(hero, topic, age);
+        }
+      } else {
+        // Use Smart Local AI Generator
+        generateLocalStory(hero, topic, age);
+      }
+
+      btn.disabled = false;
+      btn.innerHTML = `<i class="fa-solid fa-microchip"></i> <span>✨ Generar Nueva Historia con IA</span>`;
+      updateParentView();
+      playSoundEffect('fanfare');
+    }
+
+    function generateLocalStory(hero, topic, age) {
+      storyState.title = `Las Aventuras de ${hero}`;
+      storyState.ageRange = age;
+      storyState.topic = topic;
+
+      const templates = [
+        `Presenta a ${hero} al comienzo de su viaje sobre ${topic}.`,
+        `${hero} encuentra un misterioso problema en el camino y decide resolverlo con alegría.`,
+        `Con la ayuda de nuevos amigos, ${hero} descubre la clave para ${topic}.`,
+        `¡Celebración final! ${hero} comparte su aprendizaje con todo el mundo mágico.`
+      ];
+
+      storyState.scenes.forEach((sc, i) => {
+        sc.guideText = templates[i];
+      });
+    }
+
+    function loadTemplateStory(preset) {
+      if (preset === 'zorro') {
+        storyState.title = "El Zorro Mateo y el Misterio del Bosque";
+        storyState.scenes[0] = { id: 0, background: 'forest', guideText: 'Mateo despierta en el bosque y saluda a los árboles cantantes.', nodes: [{id: 'n1', assetId: 'zorro', x: 30, y: 55, size: 100, zIndex: 10}] };
+        storyState.scenes[1] = { id: 1, background: 'castle', guideText: 'Encuentra el castillo estelar y pide un deseo a la varita mágica.', nodes: [{id: 'n2', assetId: 'varita', x: 50, y: 40, size: 70, zIndex: 10}] };
+        storyState.scenes[2] = { id: 2, background: 'island', guideText: 'Un mapa en la playa lo lleva directo al cofre del tesoro.', nodes: [{id: 'n3', assetId: 'cofre', x: 60, y: 65, size: 90, zIndex: 10}] };
+        storyState.scenes[3] = { id: 3, background: 'space', guideText: '¡Celebración en las estrellas volando muy alto!', nodes: [{id: 'n4', assetId: 'estrella', x: 50, y: 30, size: 110, zIndex: 10}] };
+      } else if (preset === 'dragon') {
+        storyState.title = "Sparky el Dragón Feliz";
+        storyState.scenes[0] = { id: 0, background: 'forest', guideText: 'Sparky el dragón busca amigos para jugar a las escondidas.', nodes: [{id: 'n1', assetId: 'dragon', x: 50, y: 50, size: 110, zIndex: 10}] };
+        storyState.scenes[1] = { id: 1, background: 'island', guideText: 'Conoce al pirata feliz y comparten un gran helado.', nodes: [{id: 'n2', assetId: 'pirata', x: 40, y: 55, size: 90, zIndex: 10}] };
+        storyState.scenes[2] = { id: 2, background: 'castle', guideText: 'El hada Luna le regala una corona brillante.', nodes: [{id: 'n3', assetId: 'hada', x: 60, y: 45, size: 85, zIndex: 10}] };
+        storyState.scenes[3] = { id: 3, background: 'space', guideText: '¡Lanzan fuegos artificiales mágicos en el cielo!', nodes: [{id: 'n4', assetId: 'dragon', x: 50, y: 45, size: 120, zIndex: 10}] };
+      } else if (preset === 'espacio') {
+        storyState.title = "Misión Espacial de Oso Pol";
+        storyState.scenes[0] = { id: 0, background: 'forest', guideText: 'Oso Pol construye su cohete mágico con madera del bosque.', nodes: [{id: 'n1', assetId: 'oso', x: 30, y: 55, size: 95, zIndex: 10}] };
+        storyState.scenes[1] = { id: 1, background: 'space', guideText: 'Despegue en 3.. 2.. 1.. ¡Rumbo a las estrellas!', nodes: [{id: 'n2', assetId: 'cohete', x: 50, y: 40, size: 100, zIndex: 10}] };
+        storyState.scenes[2] = { id: 2, background: 'castle', guideText: 'Aterriza en el castillo de la luna y saluda a las estrellas.', nodes: [{id: 'n3', assetId: 'estrella', x: 70, y: 35, size: 85, zIndex: 10}] };
+        storyState.scenes[3] = { id: 3, background: 'island', guideText: '¡De regreso en casa listo para contar su historia!', nodes: [{id: 'n4', assetId: 'oso', x: 50, y: 50, size: 100, zIndex: 10}] };
+      }
+      updateParentView();
+      playSoundEffect('chime');
+    }
+
+
+    /* ===================================================
+       7. FULL MOVIE PLAYER & WEBM VIDEO EXPORT
+       =================================================== */
+    let moviePlaying = false;
+    let movieSceneIdx = 0;
+    let movieTimer = null;
+    let confettiActive = false;
+
+    function startMoviePlayer() {
+      document.getElementById('moviePlayerModal').classList.remove('hidden');
+      document.getElementById('movieTitleText').textContent = storyState.title;
+      movieSceneIdx = 0;
+      moviePlaying = true;
+      playMovieScene(movieSceneIdx);
+    }
+
+    function closeMoviePlayer() {
+      document.getElementById('moviePlayerModal').classList.add('hidden');
+      moviePlaying = false;
+      clearTimeout(movieTimer);
+      confettiActive = false;
+    }
+
+    function toggleMoviePlayback() {
+      moviePlaying = !moviePlaying;
+      const icon = document.getElementById('moviePlayIcon');
+      if (moviePlaying) {
+        icon.className = "fa-solid fa-pause";
+        playMovieScene(movieSceneIdx);
+      } else {
+        icon.className = "fa-solid fa-play";
+        clearTimeout(movieTimer);
+      }
+    }
+
+    function playMovieScene(idx) {
+      if (idx >= 4) {
+        // End of Movie - Trigger Fanfare & Confetti
+        document.getElementById('movieSubtitle').textContent = "🎉 ¡FIN DEL CUENTO! ¡ERES UN GRAN CREADOR! 🎉";
+        document.getElementById('movieSceneCounter').textContent = "¡Cuento Completado!";
+        triggerConfetti();
+        playSoundEffect('fanfare');
+        return;
+      }
+
+      movieSceneIdx = idx;
+      const scene = storyState.scenes[idx];
+      document.getElementById('movieSceneCounter').textContent = `Escena ${idx + 1} de 4`;
+      document.getElementById('movieSubtitle').textContent = scene.guideText;
+
+      // Draw Scene on Movie Canvas
+      drawSceneToCanvas(scene, document.getElementById('movieCanvas'));
+
+      // Audio Playback or TTS fallback
+      let duration = 4000;
+      if (scene.audioUrl) {
+        const audio = new Audio(scene.audioUrl);
+        audio.play();
+        audio.onended = () => {
+          if (moviePlaying) movieTimer = setTimeout(() => playMovieScene(idx + 1), 500);
+        };
+      } else {
+        // Synth voice or timer
+        if ('speechSynthesis' in window) {
+          const utter = new SpeechSynthesisUtterance(scene.guideText);
+          utter.lang = 'es-ES';
+          utter.rate = 0.95;
+          window.speechSynthesis.speak(utter);
+          utter.onend = () => {
+            if (moviePlaying) movieTimer = setTimeout(() => playMovieScene(idx + 1), 600);
+          };
+        } else {
+          if (moviePlaying) movieTimer = setTimeout(() => playMovieScene(idx + 1), duration);
+        }
+      }
+    }
+
+    /* Render Stage onto Movie Canvas */
+    function drawSceneToCanvas(scene, canvas) {
+      const ctx = canvas.getContext('2d');
+      canvas.width = 1280;
+      canvas.height = 720;
+
+      // Background Gradients
+      const grad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+      if (scene.background === 'forest') {
+        grad.addColorStop(0, '#1e3a8a');
+        grad.addColorStop(0.5, '#065f46');
+        grad.addColorStop(1, '#047857');
+      } else if (scene.background === 'castle') {
+        grad.addColorStop(0, '#0f172a');
+        grad.addColorStop(0.6, '#312e81');
+        grad.addColorStop(1, '#4c1d95');
+      } else if (scene.background === 'island') {
+        grad.addColorStop(0, '#38bdf8');
+        grad.addColorStop(0.5, '#0284c7');
+        grad.addColorStop(1, '#fef08a');
+      } else {
+        grad.addColorStop(0, '#030712');
+        grad.addColorStop(0.5, '#1e1b4b');
+        grad.addColorStop(1, '#311042');
+      }
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Draw SVG Nodes onto Canvas
+      scene.nodes.forEach(node => {
+        const asset = SVG_LIBRARY[node.assetId];
+        if (asset) {
+          const img = new Image();
+          const svgBlob = new Blob([asset.svg], { type: 'image/svg+xml;charset=utf-8' });
+          const url = URL.createObjectURL(svgBlob);
+          img.onload = () => {
+            const x = (node.x / 100) * canvas.width;
+            const y = (node.y / 100) * canvas.height;
+            const size = (node.size / 100) * 200;
+
+            ctx.save();
+            ctx.translate(x, y);
+            if (node.flipped) ctx.scale(-1, 1);
+            ctx.drawImage(img, -size / 2, -size / 2, size, size);
+            ctx.restore();
+            URL.revokeObjectURL(url);
+          };
+          img.src = url;
+        }
+      });
+    }
+
+    /* Confetti Cannon Effect */
+    function triggerConfetti() {
+      const canvas = document.getElementById('confettiCanvas');
+      const ctx = canvas.getContext('2d');
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+
+      const particles = Array.from({ length: 80 }).map(() => ({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height - canvas.height,
+        size: Math.random() * 8 + 4,
+        color: ['#f59e0b', '#ec4899', '#3b82f6', '#10b981', '#a855f7'][Math.floor(Math.random() * 5)],
+        vy: Math.random() * 3 + 2,
+        vx: Math.random() * 2 - 1
+      }));
+
+      confettiActive = true;
+      function loop() {
+        if (!confettiActive) return;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => {
+          p.y += p.vy;
+          p.x += p.vx;
+          if (p.y > canvas.height) p.y = -10;
+          ctx.fillStyle = p.color;
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        });
+        requestAnimationFrame(loop);
+      }
+      loop();
+    }
+
+    /* WebM Video Downloader */
+    function exportMovieAsWebM() {
+      const canvas = document.getElementById('movieCanvas');
+      const stream = canvas.captureStream(30);
+      const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+      const chunks = [];
+
+      recorder.ondataavailable = e => chunks.push(e.data);
+      recorder.onstop = () => {
+        const blob = new Blob(chunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${storyState.title.replace(/\s+/g, '_')}_MundoMagico.webm`;
+        a.click();
+      };
+
+      recorder.start();
+      setTimeout(() => recorder.stop(), 8000);
+      playSoundEffect('chime');
+    }
+  </script>
+</body>
+</html>
