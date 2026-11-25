@@ -73,16 +73,20 @@ jobs:
               root.insert(0, elem)
           tree.write(p, encoding="utf-8", xml_declaration=True)
           '
-
       - name: Build signed release AAB
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         run: |
           cd android
-          keytool -genkeypair -v -keystore release.keystore -alias mundomagico -keyalg RSA -keysize 2048 -validity 10000 -storepass MundoMagico2026 -keypass MundoMagico2026 -dname "CN=Mundo Magico, OU=App, O=Mundo Magico, L=City, S=State, C=ES"
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > release.keystore
           ./gradlew bundleRelease --stacktrace \
-            -Pandroid.injected.signing.store.file=$(pwd)/release.keystore \
-            -Pandroid.injected.signing.store.password=MundoMagico2026 \
-            -Pandroid.injected.signing.key.alias=mundomagico \
-            -Pandroid.injected.signing.key.password=MundoMagico2026
+            -Pandroid.injected.signing.store.file="$(pwd)/release.keystore" \
+            -Pandroid.injected.signing.store.password="$STORE_PASSWORD" \
+            -Pandroid.injected.signing.key.alias="$KEY_ALIAS" \
+            -Pandroid.injected.signing.key.password="$KEY_PASSWORD"
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
